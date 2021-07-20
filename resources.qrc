@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/photo_phly" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
