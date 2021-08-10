@@ -166,8 +166,8 @@ class PhotoPhly:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ':/plugins/photo_phly/icon.png'
-        icon_path = 'icon.png'
+        icon_path = ':/plugins/photophly/icon.png'
+        icon_path = os.path.join(__file__, '..', 'icon.png')
         self.add_action(
             icon_path,
             text=self.tr(u'PhotoPhly'),
@@ -197,7 +197,7 @@ class PhotoPhly:
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
 
-        #print "** UNLOAD PhotoPhly"
+        print("** UNLOAD PhotoPhly")
 
         for action in self.actions:
             self.iface.removePluginMenu(
@@ -206,6 +206,8 @@ class PhotoPhly:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
+        if self.pluginIsActive:
+            self.dockwidget.hide()
 
     #--------------------------------------------------------------------------
 

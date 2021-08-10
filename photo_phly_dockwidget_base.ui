@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>580</width>
-    <height>653</height>
+    <height>726</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -87,54 +87,72 @@
          </widget>
         </item>
         <item row="4" column="1">
-         <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
-           <widget class="QLabel" name="txtHeight">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QLabel" name="txtHeight">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btnZero">
+              <property name="text">
+               <string>Set zero height</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_13">
+              <property name="text">
+               <string>Target offset:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="dblOffset">
+              <property name="prefix">
+               <string/>
+              </property>
+              <property name="suffix">
+               <string> m</string>
+              </property>
+              <property name="minimum">
+               <double>-99.989999999999995</double>
+              </property>
+              <property name="singleStep">
+               <double>0.100000000000000</double>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="zeroHeight">
             <property name="text">
-             <string/>
+             <string>Height relative to zero:</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="label_13">
+           <widget class="QLabel" name="startHeight">
             <property name="text">
-             <string>Target offset:</string>
+             <string>Height relative to start:</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QDoubleSpinBox" name="dblOffset">
-            <property name="prefix">
-             <string/>
-            </property>
-            <property name="suffix">
-             <string> m</string>
-            </property>
-            <property name="minimum">
-             <double>-99.989999999999995</double>
-            </property>
-            <property name="singleStep">
-             <double>0.100000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_x13">
+           <widget class="QLabel" name="dtmHeight">
             <property name="text">
-             <string>Set height to 0</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="btnZero">
-            <property name="text">
-             <string>set</string>
+             <string>Height relative to DTM:</string>
             </property>
            </widget>
           </item>
@@ -149,13 +167,6 @@
         </item>
         <item row="5" column="1">
          <layout class="QHBoxLayout" name="horizontalLayout_2">
-          <item>
-           <widget class="QCheckBox" name="chkPos">
-            <property name="text">
-             <string>Position</string>
-            </property>
-           </widget>
-          </item>
           <item>
            <widget class="QCheckBox" name="chkTrace">
             <property name="text">
@@ -188,7 +199,7 @@
         </item>
         <item row="7" column="1">
          <widget class="QgsMapLayerComboBox" name="flightLayer">
-          <property name="showCrs" stdset="0">
+          <property name="showCrs">
            <bool>true</bool>
           </property>
          </widget>
@@ -225,7 +236,10 @@
         </item>
         <item row="9" column="1">
          <widget class="QgsMapLayerComboBox" name="refLayer">
-          <property name="showCrs" stdset="0">
+          <property name="allowEmptyLayer">
+           <bool>true</bool>
+          </property>
+          <property name="showCrs">
            <bool>true</bool>
           </property>
          </widget>
@@ -249,18 +263,18 @@
            <double>0.100000000000000</double>
           </property>
           <property name="value">
-           <double>2.000000000000000</double>
+           <double>5.000000000000000</double>
           </property>
          </widget>
         </item>
-        <item row="11" column="0">
+        <item row="13" column="0">
          <widget class="QLabel" name="label_11">
           <property name="text">
            <string>Flight speed</string>
           </property>
          </widget>
         </item>
-        <item row="11" column="1">
+        <item row="13" column="1">
          <widget class="QDoubleSpinBox" name="dblSpeed">
           <property name="suffix">
            <string> m/s</string>
@@ -272,26 +286,70 @@
            <double>0.050000000000000</double>
           </property>
           <property name="value">
-           <double>3.000000000000000</double>
+           <double>4.000000000000000</double>
           </property>
          </widget>
         </item>
-        <item row="12" column="1">
+        <item row="14" column="1">
          <widget class="Line" name="line_3">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
          </widget>
         </item>
-        <item row="13" column="0">
+        <item row="15" column="0">
+         <widget class="QLabel" name="horizintalThresholdLabel">
+          <property name="text">
+           <string>Horizontal threshold</string>
+          </property>
+         </widget>
+        </item>
+        <item row="15" column="1">
+         <widget class="QgsDoubleSpinBox" name="dblHz">
+          <property name="suffix">
+           <string> m</string>
+          </property>
+          <property name="value">
+           <double>0.500000000000000</double>
+          </property>
+          <property name="showClearButton">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="16" column="0">
+         <widget class="QLabel" name="verticalThresholdLabel">
+          <property name="text">
+           <string>Vertical threshold</string>
+          </property>
+         </widget>
+        </item>
+        <item row="16" column="1">
+         <widget class="QDoubleSpinBox" name="b">
+          <property name="suffix">
+           <string> m</string>
+          </property>
+          <property name="value">
+           <double>0.500000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="17" column="0">
          <widget class="QLabel" name="label_12">
           <property name="text">
            <string>Autopilot</string>
           </property>
          </widget>
         </item>
-        <item row="13" column="1">
+        <item row="17" column="1">
          <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QPushButton" name="btnStart">
+            <property name="text">
+             <string>Start</string>
+            </property>
+           </widget>
+          </item>
           <item>
            <widget class="QPushButton" name="pushButton_3">
             <property name="palette">
@@ -338,17 +396,10 @@
              </font>
             </property>
             <property name="text">
-             <string>Skip</string>
+             <string>Skip WP</string>
             </property>
             <property name="flat">
              <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="btnStart">
-            <property name="text">
-             <string>Start</string>
             </property>
            </widget>
           </item>
@@ -361,17 +412,72 @@
           </item>
          </layout>
         </item>
-        <item row="14" column="1">
+        <item row="18" column="1">
          <widget class="QProgressBar" name="progressBar">
           <property name="value">
            <number>0</number>
           </property>
          </widget>
         </item>
-        <item row="15" column="1">
+        <item row="19" column="1">
          <widget class="QLabel" name="lblStatus">
           <property name="text">
            <string>Status: IDLE</string>
+          </property>
+         </widget>
+        </item>
+        <item row="12" column="0">
+         <widget class="QLabel" name="finalApproachSpeedLabel">
+          <property name="text">
+           <string>Final approach speed</string>
+          </property>
+         </widget>
+        </item>
+        <item row="12" column="1">
+         <widget class="QgsDoubleSpinBox" name="dblAppraoch">
+          <property name="correctionMode">
+           <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
+          </property>
+          <property name="suffix">
+           <string> m/s</string>
+          </property>
+          <property name="value">
+           <double>1.000000000000000</double>
+          </property>
+          <property name="showClearButton">
+           <bool>false</bool>
+          </property>
+          <property name="clearValue">
+           <bool>false</bool>
+          </property>
+          <property name="expressionsEnabled">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="11" column="0">
+         <widget class="QLabel" name="gimbalPitchLabel">
+          <property name="text">
+           <string>Gimbal Pitch</string>
+          </property>
+         </widget>
+        </item>
+        <item row="11" column="1">
+         <widget class="QgsDoubleSpinBox" name="dblGimbalPitch">
+          <property name="suffix">
+           <string> °</string>
+          </property>
+          <property name="minimum">
+           <double>-90.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>30.000000000000000</double>
+          </property>
+          <property name="value">
+           <double>-90.000000000000000</double>
+          </property>
+          <property name="showClearButton">
+           <bool>false</bool>
           </property>
          </widget>
         </item>
@@ -383,6 +489,11 @@
   </widget>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>QgsDoubleSpinBox</class>
+   <extends>QDoubleSpinBox</extends>
+   <header>qgsdoublespinbox.h</header>
+  </customwidget>
   <customwidget>
    <class>QgsMapLayerComboBox</class>
    <extends>QComboBox</extends>

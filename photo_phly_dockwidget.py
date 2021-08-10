@@ -75,6 +75,7 @@ class PhotoPhlyDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.pos = QgsPoint()
         self.h = 0
         self.height_zero = 0
+        self.dtm_zero = 0
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -96,6 +97,7 @@ class PhotoPhlyDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if not v:
             raise Exception("Drone position not over dtm")
         self.height_zero = dtm_at_loc - self.h
+        self.dtm_zero = dtm_at_loc
 
     def getState(self):
         try:
@@ -104,7 +106,6 @@ class PhotoPhlyDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 data = json.loads(resp)
             self.txtLat.setText(str(data['locatt']['lat']) + "°")
             self.txtLon.setText(str(data['locatt']['lon']) + "°")
-            self.txtHeight.setText(str(data['locatt']['height']) + " m")
             point = QgsPoint(data['locatt']['lon'], data['locatt']['lat'])
             crs = QgsCoordinateReferenceSystem(4326)
             self.hist.append(point)
@@ -118,14 +119,21 @@ class PhotoPhlyDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.pos = point.clone()
             self.h = data['locatt']['height']
             self.pos.transform(xform)
-            if len(self.wp) > 0:
-                dtm_at_loc, v = self.refLayer.currentLayer().dataProvider().sample(QgsPointXY(self.pos), 1)
-                if not v:
-                    print("Drone position not over dtm -assuming DTM height zero!!!")
-                    dtm_at_loc = 0
-                target_height = self.dblAlt.value() + dtm_at_loc - self.height_zero  # m
+            dtm_at_loc, v = self.refLayer.currentLayer().dataProvider().sample(QgsPointXY(self.pos), 1)
+            if not v:
+                print("Drone position not over dtm -assuming DTM height zero!!!")
+                dtm_at_loc = 0
+            target_height = self.dblAlt.value() + dtm_at_loc - self.height_zero  # m
 
-                if self.pos.distance(self.wp[self.currentWP]) < 0.5 and abs(data['locatt']['height'] - target_height + self.dblOffset.value()) < 0.5:
+
+            self.txtHeight.setText(str(data['locatt']['height'] - self.height_zero + dtm_at_loc) + " m")
+            self.dtmHeight.setText("Height relative to DTM: %.2f m" % data['locatt']['height'] + dtm_at_loc - self.dtm_zero)
+            self.zeroHeight.setText("Height relative to zero: %.2f m" % data['locatt']['height'] - self.height_zero + self.dtm_zero)
+            self.startHeight.setText("Height relative to start: %.2f m" % data['locatt']['height'])
+            if len(self.wp) > 0:
+
+                if self.pos.distance(self.wp[self.currentWP]) < self.dblHz.value() and \
+                        abs(data['locatt']['height'] - target_height + self.dblOffset.value()) < self.dblVert.value():
                     self.currentWP += 1
                     if self.currentWP == len(self.wp):
                         self.progressBar.setValue(100)
@@ -176,7 +184,7 @@ class PhotoPhlyDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             roll = self.wp[self.currentWP].x() - self.pos.x()  # delta x
             pitch = self.wp[self.currentWP].y() - self.pos.y()  # delta y
             rp = np.array([roll, pitch])
-            rp *= 1/np.linalg.norm(rp) * min(self.dblSpeed.value(), self.pos.distance(self.wp[self.currentWP])/4)
+            rp *= 1/np.linalg.norm(rp) * max(min(self.dblSpeed.value(), self.pos.distance(self.wp[self.currentWP])/4), self.dblApproach.value())
             yaw = self.pos.azimuth(self.wp[self.currentWP])# deg
             throttle = self.dblAlt.value() # m
         #print(rp[0], rp[1], yaw, throttle)
@@ -185,7 +193,7 @@ class PhotoPhlyDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'roll': rp[1],
             'yaw': yaw,
             'throttle': throttle,
-            'gimbal': -90.0
+            'gimbal': self.dblGimbalPitch.value()
         }).encode()
         req = urllib.request.Request(f'http://{self.txtIPAddr.text()}:9000/cgi/setState', data=data)  # this will make the method "POST"
         resp = urllib.request.urlopen(req)
