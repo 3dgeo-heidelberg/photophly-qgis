@@ -30,7 +30,7 @@ import json
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, QTimer
 from qgis.gui import QgsRubberBand
-from qgis.core import QgsGeometry, QgsPoint, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
+from qgis.core import QgsGeometry, QgsPoint, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsPointXY
 from qgis.utils import iface
 
 import numpy as np
@@ -59,19 +59,22 @@ class PhotoPhlyDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.rubberBand.setColor(QtGui.QColor(255, 0, 0))
         self.getTimer = QTimer()
         self.getTimer.timeout.connect(self.getState)
-        self.getTimer.setInterval(100)
+        self.getTimer.setInterval(250)
         self.setTimer = QTimer()
         self.setTimer.timeout.connect(self.sendCommand)
-        self.setTimer.setInterval(100)
+        self.setTimer.setInterval(250)
         self.photoTimeCount = 0
         self.btnConnect.clicked.connect(self.connection)
         self.btnStart.clicked.connect(self.startAutopilot)
         self.btnStop.clicked.connect(lambda: self.sendCommand(stop=True))
         self.btnClearTrace.clicked.connect(self.hist.clear)
         self.pushButton_3.clicked.connect(self.skip)
+        self.btnZero.clicked.connect(self.setZero)
         self.wp = []
         self.currentWP = 0
         self.pos = QgsPoint()
+        self.h = 0
+        self.height_zero = 0
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -87,16 +90,22 @@ class PhotoPhlyDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.getTimer.start()
             self.btnConnect.setText("Connecting...")
 
+    def setZero(self):
+        loc = self.pos
+        dtm_at_loc, v = self.refLayer.currentLayer().dataProvider().sample(QgsPointXY(loc), 1)
+        if not v:
+            raise Exception("Drone position not over dtm")
+        self.height_zero = dtm_at_loc - self.h
 
     def getState(self):
         try:
             with urllib.request.urlopen(f'http://{self.txtIPAddr.text()}:9000/cgi/getState') as response:
                 resp = response.read()
                 data = json.loads(resp)
-            self.txtLat.setText(str(data['lat']) + "°")
-            self.txtLon.setText(str(data['lon']) + "°")
-            self.txtHeight.setText(str(data['height']) + " m")
-            point = QgsPoint(data['lon'], data['lat'])
+            self.txtLat.setText(str(data['locatt']['lat']) + "°")
+            self.txtLon.setText(str(data['locatt']['lon']) + "°")
+            self.txtHeight.setText(str(data['locatt']['height']) + " m")
+            point = QgsPoint(data['locatt']['lon'], data['locatt']['lat'])
             crs = QgsCoordinateReferenceSystem(4326)
             self.hist.append(point)
             if self.chkTrace.isChecked():
@@ -107,9 +116,16 @@ class PhotoPhlyDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             xform = QgsCoordinateTransform(crs, self.flightLayer.currentLayer().sourceCrs(), QgsProject.instance())
             self.pos = point.clone()
+            self.h = data['locatt']['height']
             self.pos.transform(xform)
             if len(self.wp) > 0:
-                if self.pos.distance(self.wp[self.currentWP]) < 0.5 and abs(data['height'] - self.dblAlt.value() + self.dblOffset.value()) < 0.5:
+                dtm_at_loc, v = self.refLayer.currentLayer().dataProvider().sample(QgsPointXY(self.pos), 1)
+                if not v:
+                    print("Drone position not over dtm -assuming DTM height zero!!!")
+                    dtm_at_loc = 0
+                target_height = self.dblAlt.value() + dtm_at_loc - self.height_zero  # m
+
+                if self.pos.distance(self.wp[self.currentWP]) < 0.5 and abs(data['locatt']['height'] - target_height + self.dblOffset.value()) < 0.5:
                     self.currentWP += 1
                     if self.currentWP == len(self.wp):
                         self.progressBar.setValue(100)
@@ -120,6 +136,7 @@ class PhotoPhlyDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             print(e)
             self.btnConnect.setText("Connect")
             self.getTimer.stop()
+            raise
     def skip(self):
         self.currentWP += 1
 
@@ -167,7 +184,8 @@ class PhotoPhlyDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'pitch': rp[0],
             'roll': rp[1],
             'yaw': yaw,
-            'throttle': throttle
+            'throttle': throttle,
+            'gimbal': -90.0
         }).encode()
         req = urllib.request.Request(f'http://{self.txtIPAddr.text()}:9000/cgi/setState', data=data)  # this will make the method "POST"
         resp = urllib.request.urlopen(req)
