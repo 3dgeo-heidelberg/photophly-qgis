@@ -96,7 +96,7 @@ class PhotoPhlyDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         dtm_at_loc, v = self.refLayer.currentLayer().dataProvider().sample(QgsPointXY(loc), 1)
         if not v:
             raise Exception("Drone position not over dtm")
-        self.height_zero = dtm_at_loc - self.h
+        self.height_zero = self.h
         self.dtm_zero = dtm_at_loc
 
     def getState(self):
@@ -117,23 +117,21 @@ class PhotoPhlyDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             xform = QgsCoordinateTransform(crs, self.flightLayer.currentLayer().sourceCrs(), QgsProject.instance())
             self.pos = point.clone()
-            self.h = data['locatt']['height']
+            self.h = float(data['locatt']['height'])
             self.pos.transform(xform)
             dtm_at_loc, v = self.refLayer.currentLayer().dataProvider().sample(QgsPointXY(self.pos), 1)
             if not v:
-                print("Drone position not over dtm -assuming DTM height zero!!!")
-                dtm_at_loc = 0
-            target_height = self.dblAlt.value() + dtm_at_loc - self.height_zero  # m
+                print("Drone position not over dtm -assuming DTM height equal to start!!!")
+                dtm_at_loc = self.dtm_zero
 
-
-            self.txtHeight.setText(str(data['locatt']['height'] - self.height_zero + dtm_at_loc) + " m")
-            self.dtmHeight.setText("Height relative to DTM: %.2f m" % data['locatt']['height'] + dtm_at_loc - self.dtm_zero)
-            self.zeroHeight.setText("Height relative to zero: %.2f m" % data['locatt']['height'] - self.height_zero + self.dtm_zero)
-            self.startHeight.setText("Height relative to start: %.2f m" % data['locatt']['height'])
-            if len(self.wp) > 0:
+            self.txtHeight.setText("Raw: %.2f m" % float(data['locatt']['height']))
+            self.dtmHeight.setText("Height relative to DTM: %.2f m" % (float(data['locatt']['height']) - dtm_at_loc + self.dtm_zero - self.height_zero))
+            self.zeroHeight.setText("Height relative to zero: %.2f m" % (float(data['locatt']['height']) - self.height_zero))
+            self.startHeight.setText("Absolute height: %.2f m" % (float(data['locatt']['height']) + self.dtm_zero - self.height_zero))
+            if len(self.wp) > 0 and self.currentWP < len(self.wp):
 
                 if self.pos.distance(self.wp[self.currentWP]) < self.dblHz.value() and \
-                        abs(data['locatt']['height'] - target_height + self.dblOffset.value()) < self.dblVert.value():
+                        abs(float(data['locatt']['height']) - self.dblAlt.value() - dtm_at_loc + self.dtm_zero - self.height_zero + self.dblOffset.value()) < self.dblVert.value():
                     self.currentWP += 1
                     if self.currentWP == len(self.wp):
                         self.progressBar.setValue(100)
@@ -167,7 +165,7 @@ class PhotoPhlyDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def sendCommand(self, stop=False):
         self.photoTimeCount += 1
-        if self.photoTimeCount >= self.dblInterval.value() * 10 and self.currentWP > 0:
+        if self.photoTimeCount >= self.dblInterval.value() * 4 and self.currentWP > 0:
             print("Taking photo")
             req = urllib.request.Request(f'http://{self.txtIPAddr.text()}:9000/cgi/takePhoto',
                                          method="PUT")
@@ -177,7 +175,7 @@ class PhotoPhlyDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.setTimer.stop()
             rp = [0,0]
             yaw = 0
-            throttle = float("0" + self.txtHeight.text().split(" ")[0])
+            throttle = self.h
             self.lblStatus.setText(f"Status: Stopped")
         else:
             self.progressBar.setValue(100*self.currentWP/len(self.wp))
@@ -186,7 +184,13 @@ class PhotoPhlyDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             rp = np.array([roll, pitch])
             rp *= 1/np.linalg.norm(rp) * max(min(self.dblSpeed.value(), self.pos.distance(self.wp[self.currentWP])/4), self.dblApproach.value())
             yaw = self.pos.azimuth(self.wp[self.currentWP])# deg
-            throttle = self.dblAlt.value() # m
+            dtm_at_loc, v = self.refLayer.currentLayer().dataProvider().sample(QgsPointXY(self.pos), 1)
+            if not v:
+                print("Drone position not over dtm -assuming DTM difference zero!!!")
+                dtm_at_loc = self.zeroHeight
+            target_height = self.dblAlt.value() + dtm_at_loc - self.dtm_zero - self.height_zero  # m
+            throttle = target_height
+            #print(throttle)
         #print(rp[0], rp[1], yaw, throttle)
         data = urllib.parse.urlencode({
             'pitch': rp[0],

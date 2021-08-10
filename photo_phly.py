@@ -218,7 +218,7 @@ class PhotoPhly:
             self.pluginIsActive = True
 
             print("** STARTING PhotoPhly")
-
+git stat
             # dockwidget may not exist if:
             #    first run of plugin
             #    removed on close (see self.onClosePlugin method)

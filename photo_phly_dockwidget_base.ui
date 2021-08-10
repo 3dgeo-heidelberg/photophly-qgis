@@ -99,7 +99,7 @@
                </sizepolicy>
               </property>
               <property name="text">
-               <string/>
+               <string>Raw: </string>
               </property>
              </widget>
             </item>
@@ -145,7 +145,7 @@
           <item>
            <widget class="QLabel" name="startHeight">
             <property name="text">
-             <string>Height relative to start:</string>
+             <string>Absolute height:</string>
             </property>
            </widget>
           </item>
@@ -325,7 +325,7 @@
          </widget>
         </item>
         <item row="16" column="1">
-         <widget class="QDoubleSpinBox" name="b">
+         <widget class="QDoubleSpinBox" name="dblVert">
           <property name="suffix">
            <string> m</string>
           </property>
@@ -434,7 +434,7 @@
          </widget>
         </item>
         <item row="12" column="1">
-         <widget class="QgsDoubleSpinBox" name="dblAppraoch">
+         <widget class="QgsDoubleSpinBox" name="dblApproach">
           <property name="correctionMode">
            <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
           </property>
